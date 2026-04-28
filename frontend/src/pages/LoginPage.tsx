@@ -1,104 +1,40 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../store/useAuth";
+import { FormEvent, useState } from "react";
+import axios from "axios";
+import { Link, useNavigate } from "react-router-dom";
 
-export const LoginPage: React.FC = () => {
-  const { login } = useAuth();
+import api from "../services/api";
+import { setSession } from "../services/session";
+
+export default function LoginPage() {
   const navigate = useNavigate();
-  const location = useLocation() as { state?: { from?: string } };
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
-  const from = location.state?.from || "/";
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setError("");
     try {
-      setLoading(true);
-      await login(email, password);
-      navigate(from, { replace: true });
+      const { data } = await api.post("/auth/login", { email, password });
+      setSession(data.access_token);
+      navigate("/upload");
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Не удалось выполнить вход.";
-      setError(msg);
-    } finally {
-      setLoading(false);
+      if (axios.isAxiosError(err)) setError(String(err.response?.data?.detail ?? err.message));
+      else setError("Не удалось войти");
     }
   };
 
   return (
-    <main className="gradient-bg flex min-h-full items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-950/80 p-6 shadow-xl">
-        <h1 className="text-lg font-semibold text-slate-50">Вход в аккаунт</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Авторизация нужна только для сохранения истории анализов. Сам анализ доступен
-          и без регистрации.
-        </p>
-
-        <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-1.5">
-            <label
-              htmlFor="email"
-              className="block text-xs font-medium text-slate-200"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="block w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 shadow-sm placeholder:text-slate-500 focus:border-leaf-400 focus:outline-none focus:ring-2 focus:ring-leaf-500/60"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label
-              htmlFor="password"
-              className="block text-xs font-medium text-slate-200"
-            >
-              Пароль
-            </label>
-            <input
-              id="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="block w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-50 shadow-sm placeholder:text-slate-500 focus:border-leaf-400 focus:outline-none focus:ring-2 focus:ring-leaf-500/60"
-            />
-          </div>
-
-          {error && (
-            <p className="rounded-lg border border-rose-700/70 bg-rose-950/60 px-3 py-2 text-xs text-rose-100">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-1 inline-flex w-full items-center justify-center rounded-full bg-leaf-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-leaf-500/30 hover:bg-leaf-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-leaf-300"
-          >
-            {loading ? "Входим…" : "Войти"}
-          </button>
-        </form>
-
-        <p className="mt-4 text-center text-xs text-slate-400">
-          Нет аккаунта?{" "}
-          <Link
-            to="/register"
-            className="font-medium text-leaf-300 hover:text-leaf-200"
-          >
-            Зарегистрироваться
-          </Link>
-        </p>
-      </div>
-    </main>
+    <div className="card" style={{ maxWidth: 420 }}>
+      <h2 className="section-title" style={{ textAlign: "center" }}>Вход</h2>
+      <p className="subtle" style={{ textAlign: "center", marginTop: -2 }}>Введите email и пароль, чтобы продолжить.</p>
+      <form className="form-grid" onSubmit={onSubmit}>
+        <input className="input" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
+        <input className="input" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" type="password" />
+        <button className="btn btn-primary" type="submit">Войти</button>
+      </form>
+      {error && <p className="notice notice-error">{error}</p>}
+      <p className="subtle" style={{ textAlign: "center" }}>Нет аккаунта? <Link to="/register">Регистрация</Link></p>
+    </div>
   );
-};
-
+}

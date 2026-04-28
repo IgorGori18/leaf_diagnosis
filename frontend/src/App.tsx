@@ -1,64 +1,64 @@
-import React from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Navbar } from "./components/Navbar";
-import { Footer } from "./components/Footer";
-import { DiagnosePage } from "./pages/DiagnosePage";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { HistoryPage } from "./pages/HistoryPage";
-import { AuthProvider, useAuth } from "./store/useAuth";
+import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { clearSession, getToken } from "./services/session";
+import leafIcon from "./assets/leaf-icon.png";
 
-const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
-  const { user, loading } = useAuth();
-  const location = useLocation();
+import HistoryPage from "./pages/HistoryPage";
+import HistoryDetailPage from "./pages/HistoryDetailPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import ResultPage from "./pages/ResultPage";
+import UploadPage from "./pages/UploadPage";
 
-  if (loading) {
-    return (
-      <main className="gradient-bg flex min-h-full items-center justify-center px-4 py-10">
-        <p className="text-sm text-slate-300">Загрузка…</p>
-      </main>
-    );
-  }
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  }
-
-  return children;
-};
-
-const AppShell: React.FC = () => {
+function Nav({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <div className="flex-1">
+    <nav className="nav">
+      {!isAuthenticated && <NavLink className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} to="/login">Вход</NavLink>}
+      {!isAuthenticated && <NavLink className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} to="/register">Регистрация</NavLink>}
+      <NavLink className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} to="/upload">Анализ</NavLink>
+      <NavLink className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} to="/result">Результат</NavLink>
+      {isAuthenticated && <NavLink className={({ isActive }) => `nav-link${isActive ? " active" : ""}`} to="/history">История</NavLink>}
+      {isAuthenticated && (
+        <button className="btn" type="button" onClick={() => { clearSession(); window.location.href = "/login"; }}>
+          Выход
+        </button>
+      )}
+    </nav>
+  );
+}
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  if (!getToken()) return <Navigate to="/login" replace />;
+  return children;
+}
+
+export default function App() {
+  const location = useLocation();
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
+  const isAuthenticated = Boolean(getToken());
+
+  return (
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="page app-header-inner">
+          <div className="app-brand">
+            <img src={leafIcon} alt="Лист" className="app-logo" />
+            <h1 className="app-title">Диагностика растений</h1>
+          </div>
+          <Nav isAuthenticated={isAuthenticated} />
+        </div>
+      </header>
+
+      <main className={`page app-content ${isAuthPage ? "page-auth" : ""}`.trim()}>
         <Routes>
-          <Route path="/" element={<DiagnosePage />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/history"
-            element={
-              <ProtectedRoute>
-                <HistoryPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/upload" element={<UploadPage />} />
+          <Route path="/result" element={<ResultPage />} />
+          <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+          <Route path="/history/:id" element={<ProtectedRoute><HistoryDetailPage /></ProtectedRoute>} />
         </Routes>
-      </div>
-      <Footer />
+      </main>
     </div>
   );
-};
-
-export const App: React.FC = () => {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppShell />
-      </AuthProvider>
-    </BrowserRouter>
-  );
-};
-
+}
