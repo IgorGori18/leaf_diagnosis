@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     ollama_model: str = "qwen2.5:7b"
     qwen_model: str = "qwen2.5:7b"
 
+    allowed_origins: str = "*"
+    plantnet_proxy: str = ""
+
     upload_dir: str = "uploads"
     max_file_size_mb: int = 5
     confidence_threshold: float = 0.6

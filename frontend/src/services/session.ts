@@ -16,36 +16,36 @@ function decodeUserId(token: string): string | null {
 }
 
 export function setSession(token: string) {
-  localStorage.setItem(TOKEN_KEY, token);
+  sessionStorage.setItem(TOKEN_KEY, token);
   const userId = decodeUserId(token);
   if (userId) {
-    localStorage.setItem(USER_ID_KEY, userId);
+    sessionStorage.setItem(USER_ID_KEY, userId);
   }
-  localStorage.removeItem(RESULT_KEY);
+  sessionStorage.removeItem(RESULT_KEY);
 }
 
 export function clearSession() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_ID_KEY);
-  localStorage.removeItem(RESULT_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(USER_ID_KEY);
+  sessionStorage.removeItem(RESULT_KEY);
 }
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  return sessionStorage.getItem(TOKEN_KEY);
 }
 
 export function setLatestResult(result: AnalysisResult) {
-  const ownerId = localStorage.getItem(USER_ID_KEY);
+  const ownerId = sessionStorage.getItem(USER_ID_KEY);
   const payload = { ownerId, result };
-  localStorage.setItem(RESULT_KEY, JSON.stringify(payload));
+  sessionStorage.setItem(RESULT_KEY, JSON.stringify(payload));
 }
 
 export function getLatestResult() {
-  const raw = localStorage.getItem(RESULT_KEY);
+  const raw = sessionStorage.getItem(RESULT_KEY);
   if (!raw) return null;
   try {
     const payload = JSON.parse(raw) as { ownerId?: string; result?: AnalysisResult };
-    const currentUserId = localStorage.getItem(USER_ID_KEY);
+    const currentUserId = sessionStorage.getItem(USER_ID_KEY);
     if (payload.ownerId && payload.ownerId !== currentUserId) {
       return null;
     }

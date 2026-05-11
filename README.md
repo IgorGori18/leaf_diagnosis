@@ -40,7 +40,7 @@ docker compose up --build
 
 ### Загрузка модели Ollama
 
-После первого запуска выполни:
+После первого запуска выполнить:
 
 ```bash
 docker exec -it leaf_diagnosis-ollama-1 ollama pull qwen2.5:7b

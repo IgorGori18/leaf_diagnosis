@@ -6,7 +6,7 @@ alembic
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
-httpx
+httpx[socks]
 pydantic-settings
 email-validator
 pytest

@@ -26,8 +26,9 @@ async def identify_plant(image_bytes: bytes, filename: str) -> dict[str, Any]:
     params = {"api-key": settings.plantnet_api_key}
     files = {"images": (filename, image_bytes, "image/jpeg")}
 
+    proxy = settings.plantnet_proxy or None
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=60, proxy=proxy) as client:
             response = await client.post(url, params=params, files=files)
             response.raise_for_status()
             payload = response.json()
@@ -99,9 +100,11 @@ def identify_diseases(image_path: str) -> dict[str, Any]:
     with path.open("rb") as file_obj:
         files = {"images": (path.name, file_obj, "image/jpeg")}
         data = {"organs": "leaf"}
+        proxy = settings.plantnet_proxy or None
         try:
             response = httpx.post(
-                settings.plantnet_diseases_url, params=params, files=files, data=data, timeout=30
+                settings.plantnet_diseases_url, params=params, files=files, data=data, timeout=60,
+                proxy=proxy,
             )
             response.raise_for_status()
             payload = response.json()
